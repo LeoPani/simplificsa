@@ -1,5 +1,5 @@
+__pycache__/
+*.pyc
 .git
-.gitignore
-*.md
-README*
-LICENSE
+.env
+setup_backend.sh
