@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SimplifICSA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-slate-900 shadow-md">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-teal-400 font-bold text-2xl tracking-tight">SimplifICSA</span>
+        <span class="hidden sm:inline-block text-slate-400 text-sm">Consulta de Obrigações Fiscais</span>
+      </div>
+      <nav class="flex items-center gap-4">
+        <a href="#" class="text-slate-300 hover:text-teal-400 text-sm transition-colors">Início</a>
+        <a href="#" class="text-slate-300 hover:text-teal-400 text-sm transition-colors">Sobre</a>
+        <a href="#" class="text-slate-300 hover:text-teal-400 text-sm transition-colors">Contato</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-slate-900 pb-20 pt-16">
+    <div class="max-w-3xl mx-auto px-6 text-center">
+      <h1 class="text-4xl font-bold text-white mb-3">Simplifique suas obrigações fiscais</h1>
+      <p class="text-slate-400 text-lg mb-10">Encontre as obrigações do seu negócio de forma rápida e precisa.</p>
+
+      <div class="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
+
+        <!-- Linha 1: Selects + Botão -->
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
+          <select id="select-setor" class="w-full sm:flex-1 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-slate-50">
+            <option value="" disabled selected>Setor</option>
+          </select>
+
+          <select id="select-porte" class="w-full sm:flex-1 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-slate-50">
+            <option value="" disabled selected>Porte</option>
+          </select>
+
+          <button
+            id="btn-consultar"
+            class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white font-semibold px-8 py-2.5 rounded-lg text-sm transition-colors shadow-md whitespace-nowrap"
+          >
+            Consultar
+          </button>
+        </div>
+
+        <div class="mt-4 border-t border-slate-100 pt-4 flex flex-col sm:flex-row gap-4 text-left w-full">
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-slate-500 uppercase">Data de Início (Compliance)</label>
+            <input type="date" id="input-data-inicio" class="w-full border border-slate-200 rounded-lg px-4 py-2 text-slate-700 focus:ring-2 focus:ring-teal-400">
+          </div>
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-slate-500 uppercase">Orçamento / Contexto IA</label>
+            <textarea id="input-contexto" rows="1" placeholder="Ex: Orçamento R$ 50k. Perto do rio..." class="w-full border border-slate-200 rounded-lg px-4 py-2 text-slate-700 text-sm focus:ring-2 focus:ring-teal-400 resize-none"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    <div id="results-container"></div>
+  </main>
+
+  <!-- Chat Widget -->
+  <div id="chat-container" class="fixed bottom-6 right-6 z-50"></div>
+
+  <script>
+    // ─── Database de Setores ───────────────────────────────────────────────────
+    const dbSectors = {
+      mineracao: {
+        label: 'Mineração',
+        portes: {
+          A: {
+            risco: 'Alto',
+            riscoLei: 'Lei 13.874/2019 — Art. 3º, inciso III (atividade de alto impacto ambiental)',
+            requisitos: [
+              {
+                titulo: 'Licença Ambiental de Operação (LAO)',
+                descricao: 'Emitida pelo COPAM/MG. Obrigatória para lavra e beneficiamento mineral. Renovação a cada 4 anos.',
+                legislacao: 'DN COPAM nº 217/2017; Lei Estadual MG nº 21.972/2016',
+                categoria: 'Ambiental',
+                diasEstimados: 180,
+              },
+              {
+                titulo: 'Plano de Fechamento de Mina (PFM)',
+                descricao: 'Documento técnico exigido pela ANM antes do início da lavra comercial.',
+                legislacao: 'Resolução ANM nº 68/2021',
+                categoria: 'Federal / ANM',
+                diasEstimados: 90,
+              },
+              {
+                titulo: 'Outorga de Uso da Água',
+                descricao: 'Obrigatória para captação superficial ou subterrânea acima dos limites de isenção.',
+                legislacao: 'IGAM — Portaria nº 10/2010; Lei Federal nº 9.433/1997',
+                categoria: 'Recursos Hídricos',
+                diasEstimados: 60,
+              },
+              {
+                titulo: 'CFEM — Compensação Financeira pela Exploração Mineral',
+                descricao: 'Alíquota variável por substância mineral. Recolhimento mensal via SIGARanm.',
+                legislacao: 'Lei Federal nº 13.540/2017; Resolução ANM nº 02/2019',
+                categoria: 'Tributária Federal',
+                diasEstimados: 15,
+              },
+              {
+                titulo: 'Ligação de Energia — CEMIG ND-5.3',
+                descricao: 'Norma técnica da CEMIG para conexão de cargas industriais de grande porte à rede de distribuição de média/alta tensão.',
+                legislacao: 'CEMIG ND-5.3 (revisão vigente); ANEEL — Módulo 3 do PRODIST',
+                categoria: 'Infraestrutura / Energia',
+                diasEstimados: 45,
+              },
+              {
+                titulo: 'ISS / Alvará Municipal — Mariana',
+                descricao: 'Cadastro no município para emissão de Nota Fiscal de Serviços e obtenção do Alvará de Funcionamento.',
+                legislacao: 'Lei Complementar Municipal de Mariana nº 157/2003 (ISS); Código de Posturas Municipal',
+                categoria: 'Municipal — Mariana',
+                diasEstimados: 30,
+              },
+            ],
+          },
+          B: {
+            risco: 'Médio-Alto',
+            riscoLei: 'Lei 13.874/2019 — Art. 3º, inciso II (atividade de médio impacto ambiental)',
+            requisitos: [
+              {
+                titulo: 'Licença Ambiental Simplificada (LAS)',
+                descricao: 'Para empreendimentos de menor porte mineral. Prazo de análise reduzido pelo COPAM.',
+                legislacao: 'DN COPAM nº 217/2017; Deliberação Normativa SEMAD',
+                categoria: 'Ambiental',
+                diasEstimados: 90,
+              },
+              {
+                titulo: 'CFEM — Compensação Financeira pela Exploração Mineral',
+                descricao: 'Alíquota variável por substância mineral. Recolhimento mensal.',
+                legislacao: 'Lei Federal nº 13.540/2017',
+                categoria: 'Tributária Federal',
+                diasEstimados: 15,
+              },
+              {
+                titulo: 'Ligação de Energia — CEMIG ND-5.3',
+                descricao: 'Conexão em média tensão para operações de médio porte. Projeto elétrico aprovado pela CEMIG.',
+                legislacao: 'CEMIG ND-5.3; ANEEL — Módulo 3 do PRODIST',
+                categoria: 'Infraestrutura / Energia',
+                diasEstimados: 30,
+              },
+              {
+                titulo: 'Alvará de Funcionamento — Mariana',
+                descricao: 'Necessário mesmo para operações Porte B situadas no município de Mariana.',
+                legislacao: 'Código de Posturas de Mariana; Lei Orgânica Municipal',
+                categoria: 'Municipal — Mariana',
+                diasEstimados: 21,
+              },
+            ],
+          },
+        },
+      },
+
+      cervejaria: {
+        label: 'Cervejaria Artesanal',
+        portes: {
+          A: {
+            risco: 'Médio',
+            riscoLei: 'Lei 13.874/2019 — Art. 3º, inciso II (baixo a médio risco, sujeita a registro)',
+            requisitos: [
+              {
+                titulo: 'Registro no MAPA — Ministério da Agricultura',
+                descricao: 'Registro do estabelecimento e de cada rótulo de bebida. Obrigatório antes do início da produção comercial.',
+                legislacao: 'Decreto Federal nº 6.871/2009; Instrução Normativa MAPA nº 65/2019',
+                categoria: 'Federal / MAPA',
+                diasEstimados: 90,
+              },
+              {
+                titulo: 'Licença Sanitária (VISA)',
+                descricao: 'Emitida pela Vigilância Sanitária Municipal de Mariana. Vistoria obrigatória anual.',
+                legislacao: 'Lei Federal nº 9.782/1999; Código Sanitário MG — Lei Estadual nº 13.317/1999',
+                categoria: 'Sanitária',
+                diasEstimados: 30,
+              },
+              {
+                titulo: 'Licença Ambiental — Efluentes Industriais',
+                descricao: 'Cervejarias geram efluentes ricos em DBO. Exige ETE ou contrato de coleta e tratamento externo.',
+                legislacao: 'DN COPAM/SEMAD nº 01/2008; Resolução CONAMA nº 430/2011',
+                categoria: 'Ambiental — SEMAD',
+                diasEstimados: 60,
+              },
+              {
+                titulo: 'Ligação de Energia Trifásica — CEMIG ND-5.3',
+                descricao: 'Equipamentos de produção (caldeiras, resfriamento, envasamento) exigem entrada trifásica conforme norma CEMIG.',
+                legislacao: 'CEMIG ND-5.3; NBR 5410',
+                categoria: 'Infraestrutura / Energia',
+                diasEstimados: 30,
+              },
+              {
+                titulo: 'ISS e Alvará — Mariana',
+                descricao: 'Alvará de localização e funcionamento emitido pela Prefeitura de Mariana, com taxa IRCA.',
+                legislacao: 'LC Municipal de Mariana; Lei de Uso e Ocupação do Solo',
+                categoria: 'Municipal — Mariana',
+                diasEstimados: 21,
+              },
+            ],
+          },
+          B: {
+            risco: 'Baixo-Médio',
+            riscoLei: 'Lei 13.874/2019 — Art. 3º, inciso I (baixo risco — produção artesanal em escala reduzida)',
+            requisitos: [
+              {
+                titulo: 'Registro Simplificado no MAPA',
+                descricao: 'Produção artesanal de até 100 mil litros/ano pode utilizar regime simplificado.',
+                legislacao: 'IN MAPA nº 65/2019; Lei nº 13.874/2019 — Art. 3º',
+                categoria: 'Federal / MAPA',
+                diasEstimados: 45,
+              },
+              {
+                titulo: 'Alvará Sanitário Municipal — Mariana',
+                descricao: 'Vistoria e cadastro na VISA municipal antes de iniciar a comercialização.',
+                legislacao: 'Código Sanitário MG; Portaria Municipal de Mariana',
+                categoria: 'Sanitária',
+                diasEstimados: 21,
+              },
+              {
+                titulo: 'Ligação de Energia Monofásica/Bifásica — CEMIG ND-5.3',
+                descricao: 'Para produções menores, verificar enquadramento em CEMIG ND-5.3 para conexões de baixa tensão.',
+                legislacao: 'CEMIG ND-5.3; ANEEL — Módulo 3 do PRODIST',
+                categoria: 'Infraestrutura / Energia',
+                diasEstimados: 20,
+              },
+            ],
+          },
+        },
+      },
+
+      reciclagem: {
+        label: 'Usina de Reciclagem RCD',
+        portes: {
+          A: {
+            risco: 'Alto',
+            riscoLei: 'Lei 13.874/2019 — Art. 3º, inciso III + Política Nacional de Resíduos Sólidos (PNRS)',
+            requisitos: [
+              {
+                titulo: 'Plano Municipal de Gestão de RCD — Credenciamento',
+                descricao: 'A usina deve estar credenciada junto ao Plano Municipal de Gestão de Resíduos da Construção Civil de Mariana.',
+                legislacao: 'Resolução CONAMA nº 307/2002; Lei Federal nº 12.305/2010 (PNRS)',
+                categoria: 'Federal / Municipal',
+                diasEstimados: 60,
+              },
+              {
+                titulo: 'Licença de Instalação e Operação — COPAM/SEMAD',
+                descricao: 'LI e LO emitidas pelo SUPRAM Leste Mineiro. Necessário EIA/RIMA para Porte A.',
+                legislacao: 'DN COPAM nº 217/2017; Lei Estadual MG nº 21.972/2016',
+                categoria: 'Ambiental — COPAM/SEMAD',
+                diasEstimados: 120,
+              },
+              {
+                titulo: 'Manifesto de Resíduos e MTR',
+                descricao: 'Controle de movimentação dos resíduos via MTR (Manifesto de Transporte de Resíduos) no Sistema FEAM.',
+                legislacao: 'Resolução CONAMA nº 275/2001; Deliberação Normativa COPAM nº 74/2004',
+                categoria: 'Ambiental',
+                diasEstimados: 15,
+              },
+              {
+                titulo: 'Outorga de Uso do Solo / Zoneamento — Mariana',
+                descricao: 'Verificação de compatibilidade com Plano Diretor e Zoneamento Industrial de Mariana.',
+                legislacao: 'Lei do Plano Diretor de Mariana; Lei de Parcelamento e Uso do Solo',
+                categoria: 'Municipal — Mariana',
+                diasEstimados: 45,
+              },
+              {
+                titulo: 'Ligação de Energia Industrial — CEMIG ND-5.3',
+                descricao: 'Britadores, trituradores e esteiras exigem projeto elétrico industrial aprovado pela CEMIG conforme ND-5.3.',
+                legislacao: 'CEMIG ND-5.3; NR-10; NBR 5410',
+                categoria: 'Infraestrutura / Energia',
+                diasEstimados: 45,
+              },
+            ],
+          },
+          B: {
+            risco: 'Médio',
+            riscoLei: 'Lei 13.874/2019 — Art. 3º, inciso II (médio impacto — atividade sujeita a licenciamento simplificado)',
+            requisitos: [
+              {
+                titulo: 'Licença Ambiental Simplificada — COPAM',
+                descricao: 'Para usinas de menor capacidade de processamento de RCD.',
+                legislacao: 'DN COPAM nº 217/2017',
+                categoria: 'Ambiental — COPAM/SEMAD',
+                diasEstimados: 60,
+              },
+              {
+                titulo: 'MTR — Manifesto de Transporte de Resíduos',
+                descricao: 'Obrigatório mesmo para Porte B. Emissão via plataforma digital da FEAM.',
+                legislacao: 'Resolução CONAMA nº 275/2001',
+                categoria: 'Ambiental',
+                diasEstimados: 15,
+              },
+              {
+                titulo: 'Alvará de Funcionamento — Mariana',
+                descricao: 'Emitido pela Prefeitura após vistoria de conformidade com o Plano Diretor.',
+                legislacao: 'Código de Posturas de Mariana',
+                categoria: 'Municipal — Mariana',
+                diasEstimados: 21,
+              },
+              {
+                titulo: 'Ligação de Energia — CEMIG ND-5.3',
+                descricao: 'Projeto de conexão para carga instalada conforme capacidade da usina.',
+                legislacao: 'CEMIG ND-5.3; ANEEL — Módulo 3 do PRODIST',
+                categoria: 'Infraestrutura / Energia',
+                diasEstimados: 30,
+              },
+            ],
+          },
+        },
+      },
+
+      // ─── Setores declarados (a detalhar) ──────────────────────────────────
+      comercioVarejo:    { label: 'Comércio Varejista',           portes: {} },
+      agronegocio:       { label: 'Agronegócio / Agricultura',    portes: {} },
+      construcaoCivil:   { label: 'Construção Civil',             portes: {} },
+      logistica:         { label: 'Logística e Transporte',       portes: {} },
+      saude:             { label: 'Saúde e Clínicas',             portes: {} },
+      tecnologia:        { label: 'Tecnologia e Software',        portes: {} },
+      turismo:           { label: 'Turismo e Hospitalidade',      portes: {} },
+      educacao:          { label: 'Educação e Ensino',            portes: {} },
+      alimentosBeidas:   { label: 'Alimentos e Bebidas (Geral)',  portes: {} },
+      textil:            { label: 'Têxtil e Confecção',           portes: {} },
+      energiaRenovavel:  { label: 'Energia Renovável',            portes: {} },
+      metalurgia:        { label: 'Metalurgia e Siderurgia',      portes: {} },
+    };
+
+    // ─── Mapeamento de chaves dos <select> para dbSectors ─────────────────────
+    const setorMap = {
+      mineracao:       'mineracao',
+      cervejaria:      'cervejaria',
+      reciclagem:      'reciclagem',
+      comercioVarejo:  'comercioVarejo',
+      agronegocio:     'agronegocio',
+      construcaoCivil: 'construcaoCivil',
+      logistica:       'logistica',
+      saude:           'saude',
+      tecnologia:      'tecnologia',
+      turismo:         'turismo',
+      educacao:        'educacao',
+      alimentosBeidas: 'alimentosBeidas',
+      textil:          'textil',
+      energiaRenovavel:'energiaRenovavel',
+      metalurgia:      'metalurgia',
+    };
+
+    // ─── Badge de risco ────────────────────────────────────────────────────────
+    function riscoBadgeClass(risco) {
+      if (!risco) return 'bg-slate-100 text-slate-600';
+      const r = risco.toLowerCase();
+      if (r.includes('alto'))   return 'bg-red-100 text-red-700 border border-red-200';
+      if (r.includes('médio'))  return 'bg-amber-100 text-amber-700 border border-amber-200';
+      return 'bg-green-100 text-green-700 border border-green-200';
+    }
+
+    function categoriaBadgeClass(cat) {
+      const c = (cat || '').toLowerCase();
+      if (c.includes('ambiental'))    return 'bg-emerald-50 text-emerald-700';
+      if (c.includes('federal'))      return 'bg-blue-50 text-blue-700';
+      if (c.includes('municipal'))    return 'bg-violet-50 text-violet-700';
+      if (c.includes('sanitária'))    return 'bg-pink-50 text-pink-700';
+      if (c.includes('energia'))      return 'bg-yellow-50 text-yellow-700';
+      if (c.includes('tributária'))   return 'bg-orange-50 text-orange-700';
+      return 'bg-slate-100 text-slate-600';
+    }
+
+    // ─── Renderização ──────────────────────────────────────────────────────────
+    function renderResults(sectorKey, porteKey, dataInicio) {
+      const container = document.getElementById("results-container");
+      const sector = dbSectors[sectorKey];
+      const porte = sector && sector.portes[porteKey];
+      if (!porte || !porte.requisitos || porte.requisitos.length === 0) {
+        container.innerHTML = "<p class=\"text-center text-slate-400 mt-8\">Setor sem requisitos cadastrados.</p>"; return;
+      }
+      const badgeClass = riscoBadgeClass(porte.risco);
+      let baseDate = dataInicio ? new Date(dataInicio) : null;
+      const cardsHTML = porte.requisitos.map((req, i) => {
+        let dataConclusao = "";
+        if (baseDate) {
+          baseDate.setDate(baseDate.getDate() + 30); // simula 30 dias por etapa
+          dataConclusao = `<div class="mt-2 bg-teal-50 border border-teal-100 rounded-md px-3 py-1.5 inline-block text-xs font-semibold text-teal-700">📅 Previsão: ${baseDate.toLocaleDateString("pt-BR")}</div>`;
+        }
+        return `
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-3 relative">
+      <div class="absolute -left-3 top-6 w-6 h-6 bg-slate-900 rounded-full text-white text-xs flex items-center justify-center font-bold border-4 border-slate-50">${i + 1}</div>
+      <div class="pl-4">
+        <h3 class="text-slate-800 font-semibold">${req.titulo}</h3>
+        <p class="text-slate-500 text-sm mt-1">${req.descricao}</p>
+        <p class="text-slate-400 text-xs mt-1">Legislação: ${req.legislacao}</p>
+        ${dataConclusao}
+      </div>
+    </div>`;
+      }).join("");
+      container.innerHTML = `
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold text-slate-800">${sector.label} — Porte ${porteKey}</h2>
+      <div class="mt-2 text-sm font-semibold px-4 py-1.5 rounded-full inline-block ${badgeClass}">Risco: ${porte.risco}</div>
+    </div>
+    <div class="border-l-2 border-slate-200 ml-3 pl-4 flex flex-col gap-6">${cardsHTML}</div>`;
+      container.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // ─── Popula os <select> dinamicamente ─────────────────────────────────────
+    (function populateSelects() {
+      const selectSetor = document.getElementById('select-setor');
+      selectSetor.innerHTML = '<option value="" disabled selected>Setor</option>';
+      Object.entries(dbSectors).forEach(([key, data]) => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = data.label;
+        selectSetor.appendChild(opt);
+      });
+
+      const selectPorte = document.getElementById('select-porte');
+      selectPorte.innerHTML = `
+        <option value="" disabled selected>Porte</option>
+        <option value="A">Porte A (Grande / Alta Complexidade)</option>
+        <option value="B">Porte B (Pequeno-Médio / Simplificado)</option>
+      `;
+    })();
+
+    // ─── Listener do botão ─────────────────────────────────────────────────────
+    document.getElementById("btn-consultar").addEventListener("click", function () {
+      const setor = document.getElementById("select-setor").value;
+      const porte = document.getElementById("select-porte").value;
+      const dataIn = document.getElementById("input-data-inicio").value;
+      const ctx = document.getElementById("input-contexto").value;
+      if (!setor || !porte) { alert("Selecione Setor e Porte."); return; }
+      const oculto = `O usuário busca abrir uma empresa: Setor "${setor}", Porte "${porte}". Início: ${dataIn}. Contexto extra: ${ctx || "Nenhum"}. Responda focado nisso.`;
+      if(chatHistory.length === 1) { chatHistory.push({ role: "system", content: oculto }); }
+      else { chatHistory[1].content = oculto; }
+      renderResults(setor, porte, dataIn);
+    });
+
+    // ─── Chatbot Groq ──────────────────────────────────────────────────────────
+    const GROQ_API_KEY = '';
+
+    const GROQ_SYSTEM_PROMPT = 'Você é o assistente do simplifICSA, especialista em direito ambiental e regulatório para indústrias em Mariana/MG.';
+    const GROQ_MODEL = 'llama3-8b-8192';
+
+    const chatHistory = [{ role: 'system', content: GROQ_SYSTEM_PROMPT }];
+
+    // ─── Injeção da UI do chat ─────────────────────────────────────────────────
+    document.getElementById('chat-container').innerHTML = `
+      <!-- Botão flutuante -->
+      <button
+        id="chat-toggle"
+        title="Assistente simplifICSA"
+        class="ml-auto flex items-center justify-center w-14 h-14 rounded-full bg-teal-500 hover:bg-teal-600 active:bg-teal-700 shadow-lg transition-colors"
+        aria-label="Abrir chat"
+      >
+        <svg id="chat-icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+        </svg>
+        <svg id="chat-icon-close" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Janela de chat -->
+      <div
+        id="chat-window"
+        class="hidden absolute bottom-16 right-0 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden"
+        style="max-height: 520px;"
+      >
+        <!-- Cabeçalho -->
+        <div class="bg-slate-900 px-4 py-3 flex items-center gap-3">
+          <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+          <span class="text-white text-sm font-semibold">Assistente simplifICSA</span>
+          <span class="ml-auto text-slate-400 text-xs">Groq · llama3</span>
+        </div>
+
+        <!-- Mensagens -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" style="min-height:200px; max-height:340px;">
+          <div class="chat-bubble assistant">
+            <div class="bg-slate-100 text-slate-700 text-sm rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-xs leading-relaxed">
+              Olá! Sou o assistente do simplifICSA. Pergunte sobre licenças, obrigações fiscais ou regulamentações para sua indústria em Mariana/MG.
+            </div>
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div class="border-t border-slate-100 px-3 py-3 flex gap-2 items-end bg-white">
+          <textarea
+            id="chat-input"
+            rows="1"
+            placeholder="Digite sua pergunta..."
+            class="flex-1 resize-none border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 leading-relaxed"
+            style="max-height:100px;"
+          ></textarea>
+          <button
+            id="chat-send"
+            class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-teal-500 hover:bg-teal-600 active:bg-teal-700 transition-colors shadow"
+            aria-label="Enviar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // ─── Toggle da janela ──────────────────────────────────────────────────────
+    document.getElementById('chat-toggle').addEventListener('click', function () {
+      const win       = document.getElementById('chat-window');
+      const iconOpen  = document.getElementById('chat-icon-open');
+      const iconClose = document.getElementById('chat-icon-close');
+      const isHidden  = win.classList.toggle('hidden');
+      iconOpen.classList.toggle('hidden', !isHidden);
+      iconClose.classList.toggle('hidden', isHidden);
+      if (!isHidden) document.getElementById('chat-input').focus();
+    });
+
+    // ─── Utilitários de UI ─────────────────────────────────────────────────────
+    function appendBubble(role, text) {
+      const messages = document.getElementById('chat-messages');
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-bubble ' + role;
+
+      const bubble = document.createElement('div');
+      bubble.textContent = text;
+
+      if (role === 'user') {
+        wrap.className += ' flex justify-end';
+        bubble.className = 'bg-teal-500 text-white text-sm rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-xs leading-relaxed';
+      } else {
+        bubble.className = 'bg-slate-100 text-slate-700 text-sm rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-xs leading-relaxed';
+      }
+
+      wrap.appendChild(bubble);
+      messages.appendChild(wrap);
+      messages.scrollTop = messages.scrollHeight;
+      return bubble;
+    }
+
+    function setInputLocked(locked) {
+      document.getElementById('chat-input').disabled = locked;
+      document.getElementById('chat-send').disabled  = locked;
+    }
+
+    // ─── Chamada à API Groq ────────────────────────────────────────────────────
+    async function sendToGroq(userText) {
+      chatHistory.push({ role: 'user', content: userText });
+
+      const thinkingBubble = appendBubble('assistant', '…');
+      setInputLocked(true);
+
+      try {
+        if (!GROQ_API_KEY) {
+          throw new Error('GROQ_API_KEY não configurada. Defina a chave no arquivo index.html.');
+        }
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + GROQ_API_KEY,
+          },
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+            messages: chatHistory,
+            temperature: 0.5,
+            max_tokens: 1024,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error?.message || 'Erro ' + response.status + ' na API Groq.');
+        }
+
+        const data = await response.json();
+        const assistantText = data.choices?.[0]?.message?.content?.trim() || 'Sem resposta da API.';
+        chatHistory.push({ role: 'assistant', content: assistantText });
+        thinkingBubble.textContent = assistantText;
+      } catch (err) {
+        thinkingBubble.className = 'bg-red-50 text-red-600 text-sm rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-xs leading-relaxed border border-red-100';
+        thinkingBubble.textContent = '⚠ ' + err.message;
+        chatHistory.pop();
+      } finally {
+        setInputLocked(false);
+        document.getElementById('chat-input').focus();
+      }
+    }
+
+    // ─── Listeners de envio ────────────────────────────────────────────────────
+    document.getElementById('chat-send').addEventListener('click', function () {
+      const input = document.getElementById('chat-input');
+      const text  = input.value.trim();
+      if (!text) return;
+      appendBubble('user', text);
+      input.value = '';
+      input.style.height = 'auto';
+      sendToGroq(text);
+    });
+
+    document.getElementById('chat-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chat-send').click();
+      }
+    });
+
+    document.getElementById('chat-input').addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+  </script>
+</body>
+</html>
