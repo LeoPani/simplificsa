@@ -30,7 +30,7 @@
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <span class="text-teal-400 font-bold text-2xl tracking-tight">SimplifICSA</span>
-        <span class="hidden sm:inline-block text-slate-400 text-sm">Consulta de Obrigações Fiscais</span>
+        <span class="hidden sm:inline-block text-slate-400 text-sm">Compliance Jurídico Regulatório</span>
       </div>
       <nav class="flex items-center gap-4">
         <a href="#" class="text-slate-300 hover:text-teal-400 text-sm transition-colors">Início</a>
@@ -43,8 +43,8 @@
   <!-- Hero Section -->
   <section class="bg-slate-900 pb-20 pt-16">
     <div class="max-w-3xl mx-auto px-6 text-center">
-      <h1 class="text-4xl font-bold text-white mb-3">Simplifique suas obrigações fiscais</h1>
-      <p class="text-slate-400 text-lg mb-10">Encontre as obrigações do seu negócio de forma rápida e precisa.</p>
+      <h1 class="text-4xl font-bold text-white mb-3">Simplifique seu Compliance Jurídico</h1>
+      <p class="text-slate-400 text-lg mb-10">Identifique obrigações regulatórias, monte seu cronograma e conecte-se com o profissional certo.</p>
 
       <div class="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
 
@@ -84,6 +84,7 @@
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-6 py-12">
     <div id="results-container"></div>
+    <div id="profissionais-container" class="mt-16"></div>
   </main>
 
   <!-- Chat Widget -->
@@ -369,6 +370,162 @@
       metalurgia:      'metalurgia',
     };
 
+    // ─── Mock: Profissionais ──────────────────────────────────────────────────
+    const dbProfissionais = [
+      {
+        nome: 'Dr. Carlos Mendes',
+        especialidade: 'Advogado Ambiental',
+        descricao: 'Especialista em licenciamento junto ao COPAM/SEMAD-MG. 12 anos de atuação em Mariana e região do Quadrilátero Ferrífero.',
+        contato: '(31) 99234-5678',
+        email: 'carlos.mendes@exemplo.adv.br',
+        avaliacao: 4.9,
+        disponivel: true,
+        categorias: ['Ambiental', 'Ambiental — SEMAD', 'Ambiental — COPAM/SEMAD'],
+      },
+      {
+        nome: 'Eng. Fernanda Rocha',
+        especialidade: 'Engenheira Ambiental — CREA/MG',
+        descricao: 'EIA/RIMA, outorgas de uso da água (IGAM), relatórios de impacto e planos de controle ambiental.',
+        contato: '(31) 98765-4321',
+        email: 'fernanda.rocha@exemplo.eng.br',
+        avaliacao: 4.8,
+        disponivel: true,
+        categorias: ['Ambiental', 'Recursos Hídricos', 'Ambiental — COPAM/SEMAD'],
+      },
+      {
+        nome: 'Eng. Ricardo Alves',
+        especialidade: 'Engenheiro Eletricista — CEMIG ND-5.3',
+        descricao: 'Projetos elétricos industriais, conexões em média e alta tensão, NR-10. Credenciado CEMIG para Porte A e B.',
+        contato: '(31) 97654-3210',
+        email: 'ricardo.alves@exemplo.eng.br',
+        avaliacao: 4.7,
+        disponivel: true,
+        categorias: ['Infraestrutura / Energia'],
+      },
+      {
+        nome: 'Dra. Mariana Costa',
+        especialidade: 'Advogada Tributarista — OAB/MG',
+        descricao: 'CFEM, ISS, regimes especiais para mineração e indústria. Representação em autuações federais e municipais.',
+        contato: '(31) 96543-2109',
+        email: 'mariana.costa@exemplo.adv.br',
+        avaliacao: 4.9,
+        disponivel: false,
+        categorias: ['Tributária Federal', 'Municipal — Mariana'],
+      },
+      {
+        nome: 'Eng. Paulo Neves',
+        especialidade: 'Geólogo / Consultor ANM',
+        descricao: 'Plano de Fechamento de Mina, processos ANM/DNPM, outorgas minerárias e regularização de lavra.',
+        contato: '(31) 95432-1098',
+        email: 'paulo.neves@exemplo.com.br',
+        avaliacao: 4.6,
+        disponivel: true,
+        categorias: ['Federal / ANM', 'Federal / Municipal'],
+      },
+      {
+        nome: 'Dra. Ana Beatriz Lima',
+        especialidade: 'Engenheira Sanitarista — VISA',
+        descricao: 'Regularização junto à Vigilância Sanitária municipal, alvarás sanitários e projetos para cervejarias e alimentos.',
+        contato: '(31) 94321-0987',
+        email: 'ana.lima@exemplo.eng.br',
+        avaliacao: 4.8,
+        disponivel: true,
+        categorias: ['Sanitária'],
+      },
+      {
+        nome: 'Eng. Bruno Santos',
+        especialidade: 'Engenheiro Agrônomo — MAPA',
+        descricao: 'Registro de estabelecimentos e rótulos junto ao MAPA, INs para bebidas artesanais e produtos de origem vegetal.',
+        contato: '(31) 93210-9876',
+        email: 'bruno.santos@exemplo.eng.br',
+        avaliacao: 4.5,
+        disponivel: true,
+        categorias: ['Federal / MAPA'],
+      },
+      {
+        nome: 'Dr. Lucas Ferreira',
+        especialidade: 'Advogado Municipal — Mariana',
+        descricao: 'Alvarás, uso do solo, código de posturas de Mariana, credenciamento RCD e regularização de zoneamento industrial.',
+        contato: '(31) 92109-8765',
+        email: 'lucas.ferreira@exemplo.adv.br',
+        avaliacao: 4.7,
+        disponivel: true,
+        categorias: ['Municipal — Mariana', 'Federal / Municipal'],
+      },
+    ];
+
+    function _avatarColor(nome) {
+      const palette = ['bg-teal-600','bg-blue-600','bg-violet-600','bg-rose-600','bg-amber-600','bg-emerald-600','bg-sky-600','bg-indigo-600'];
+      let h = 0;
+      for (const c of nome) h = (h * 31 + c.charCodeAt(0)) & 0xff;
+      return palette[h % palette.length];
+    }
+
+    function _initials(nome) {
+      return nome.replace(/^(Dr|Eng|Dra)\.\s*/i, '').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    }
+
+    function _stars(n) {
+      const filled = Math.round(n);
+      return '<span class="text-amber-400">' + '★'.repeat(filled) + '</span><span class="text-slate-200">' + '★'.repeat(5 - filled) + '</span>';
+    }
+
+    function renderProfissionais(categorias) {
+      const container = document.getElementById('profissionais-container');
+      const matches = dbProfissionais.filter(p =>
+        p.categorias.some(c => categorias.includes(c))
+      );
+
+      if (matches.length === 0) { container.innerHTML = ''; return; }
+
+      const cardsHTML = matches.map(p => {
+        const disponibilidadeBadge = p.disponivel
+          ? '<span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 font-medium">● Disponível</span>'
+          : '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-400 border border-slate-200 font-medium">○ Ocupado</span>';
+
+        const especialidadeBadges = p.categorias.map(c =>
+          `<span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-100">${c}</span>`
+        ).join('');
+
+        return `
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
+          <div class="flex items-start gap-3">
+            <div class="w-11 h-11 rounded-full ${_avatarColor(p.nome)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              ${_initials(p.nome)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-slate-800 font-semibold text-sm">${p.nome}</h3>
+                ${disponibilidadeBadge}
+              </div>
+              <p class="text-teal-600 text-xs font-medium mt-0.5">${p.especialidade}</p>
+              <div class="flex items-center gap-1 mt-1">
+                ${_stars(p.avaliacao)}
+                <span class="text-xs text-slate-500 ml-0.5">${p.avaliacao.toFixed(1)}</span>
+              </div>
+            </div>
+          </div>
+          <p class="text-slate-500 text-xs leading-relaxed">${p.descricao}</p>
+          <div class="flex flex-wrap gap-1.5">${especialidadeBadges}</div>
+          <button
+            onclick="alert('Contato: ${p.nome}\\nTel: ${p.contato}\\nEmail: ${p.email}\\n\\nEste é um dado de demonstração. Em produção, aqui abrirá o perfil completo do profissional.')"
+            class="w-full text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-200 rounded-xl py-2.5 transition-colors"
+          >
+            Entrar em Contato
+          </button>
+        </div>`;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">Profissionais Recomendados</h2>
+          <p class="text-slate-400 text-sm mt-1">Especialistas que podem te ajudar a resolver cada etapa do compliance.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          ${cardsHTML}
+        </div>`;
+    }
+
     // ─── Badge de risco ────────────────────────────────────────────────────────
     function riscoBadgeClass(risco) {
       if (!risco) return 'bg-slate-100 text-slate-600';
@@ -423,6 +580,9 @@
     </div>
     <div class="border-l-2 border-slate-200 ml-3 pl-4 flex flex-col gap-6">${cardsHTML}</div>`;
       container.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      const categorias = (porte.requisitos || []).map(r => r.categoria);
+      renderProfissionais(categorias);
     }
 
     // ─── Popula os <select> dinamicamente ─────────────────────────────────────
@@ -460,7 +620,7 @@
     // ─── Chatbot Groq ──────────────────────────────────────────────────────────
     const GROQ_API_KEY = '';
 
-    const GROQ_SYSTEM_PROMPT = 'Você é o assistente do simplifICSA, especialista em direito ambiental e regulatório para indústrias em Mariana/MG.';
+    const GROQ_SYSTEM_PROMPT = 'Você é o assistente do simplifICSA, especialista em compliance jurídico e regulatório para empresas e indústrias em Mariana/MG. Responda sempre de forma objetiva, cite a legislação pertinente e, quando aplicável, indique qual tipo de profissional (advogado, engenheiro, contador etc.) pode ajudar.';
     const GROQ_MODEL = 'llama3-8b-8192';
 
     const chatHistory = [{ role: 'system', content: GROQ_SYSTEM_PROMPT }];
@@ -499,7 +659,7 @@
         <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" style="min-height:200px; max-height:340px;">
           <div class="chat-bubble assistant">
             <div class="bg-slate-100 text-slate-700 text-sm rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-xs leading-relaxed">
-              Olá! Sou o assistente do simplifICSA. Pergunte sobre licenças, obrigações fiscais ou regulamentações para sua indústria em Mariana/MG.
+              Olá! Sou o assistente de Compliance Jurídico do simplifICSA. Pergunte sobre licenças, obrigações regulatórias ou qual profissional pode te ajudar em cada etapa.
             </div>
           </div>
         </div>
